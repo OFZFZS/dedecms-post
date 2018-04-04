@@ -64,6 +64,7 @@ class DedeCMSLogin:
 
 
 
+
 if __name__ == '__main__':
     for _ in range(10):
         dedeLogin = DedeCMSLogin("test001", "test123456")

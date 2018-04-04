@@ -4,6 +4,20 @@ import requests
 import pytesseract
 from PIL import Image
 import re
+import easye
+import threading
+
+
+class Mythread(threading.Thread):
+    def run(self):
+        # 每个线程循环注册50次
+        for _ in range(50):
+            userid = easye.getRandomChar(4, 2) + easye.getRandomNumber(3)
+            pwd = easye.getRandomChar(2, 2) + easye.getRandomNumber(6)
+            uname = userid
+            email = easye.getRandomEmail()
+            dedeRegister = DedeCMSRegister(userid, pwd, uname, email)
+            dedeRegister.main()
 
 
 class DedeCMSRegister:
@@ -36,13 +50,13 @@ class DedeCMSRegister:
             "sex": "",
             "agree": ""
 
-
         }
-        print(data)
         response = ssion.post(url, data=data)
         loginResult = self.register_check(response.text)
-        print(loginResult)
-
+        if loginResult.find("验证码") != -1:
+            print("验证码错误!")
+        else:
+            print("注册可能成功了一次..")
 
     def getImgCode(self, filename):
         image = Image.open(filename)
@@ -83,8 +97,11 @@ class DedeCMSRegister:
         try:
             while len(self.vdcode) < 4:
                 bytes_img = self.getResponse("http://localhost/include/vdimgck.php", ssion)
+                # 上锁
+                # myLock.acquire()
                 self.save_img(bytes_img)
                 self.getImgCode("vdimgck.php")
+                # myLock.release()
             self.checkState(ssion)
             self.register(ssion, "http://localhost/member/reg_new.php")
         except Exception as error:
@@ -92,6 +109,12 @@ class DedeCMSRegister:
 
 
 if __name__ == '__main__':
-    for _ in range(10):
-        dedeRegister = DedeCMSRegister("test001", "pwd1111", "test001", "test001@126.com")
-        dedeRegister.main()
+    # 看情况选择上不上锁
+    # myLock = threading.Lock()
+    # 开启5个线程
+    for _ in range(5):
+        mythread = Mythread()
+        mythread.start()
+
+    # 显示正在运行的线程
+    # print(threading.enumerate())
